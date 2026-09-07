@@ -13,7 +13,7 @@ color plane) and displays the PNG the server renders.
 ```
 plane_app/
 ├── app.py                 Flask app + numpy field computation + matplotlib rendering
-├── templates/
+├── images/
 │   └── index.html         GUI (fetch()'s the backend, no client-side math)
 ├── screenshots/
 │   └── plane_app_screenshot.png
