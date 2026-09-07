@@ -23,6 +23,7 @@ import re
 import matplotlib
 matplotlib.use("Agg")  # headless rendering — no display needed on the server
 import matplotlib.pyplot as plt
+from matplotlib.widgets import RadioButtons
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 
@@ -104,7 +105,7 @@ def render_png(fields, color_key, m, n):
     norm = plt.Normalize(vmin=np.nanmin(cfield), vmax=np.nanmax(cfield))
     facecolors = CMAP(norm(cfield))
 
-    fig = plt.figure(figsize=(6, 6), dpi=140)
+    fig = plt.figure(figsize=(8, 6), dpi=160)
     ax = fig.add_subplot(111, projection="3d")
     fig.subplots_adjust(left=0.02, right=0.98, top=0.98, bottom=0.02)
 
@@ -114,7 +115,11 @@ def render_png(fields, color_key, m, n):
         rstride=1, cstride=1,
         linewidth=0, antialiased=False, shade=False,
     )
-    ax.set_box_aspect(None, zoom=1.15)
+
+    sm = plt.cm.ScalarMappable(cmap=CMAP)
+    cbar = fig.colorbar(sm, ax=ax, shrink=0.6, pad=0.1)
+
+    ax.set_box_aspect(None, zoom=0.85)
     ax.view_init(elev=n, azim=m)
     ax.set_xlabel(LABELS[spatial_keys[0]], fontsize=8)
     ax.set_ylabel(LABELS[spatial_keys[1]], fontsize=8)
