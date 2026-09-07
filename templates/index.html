@@ -35,6 +35,7 @@
   *{box-sizing:border-box;}
   body{margin:0;font-family:var(--font);background:var(--md-surface-dim);color:var(--md-on-surface);-webkit-font-smoothing:antialiased;}
   .app{max-width:520px;margin:0 auto;padding-bottom:48px;}
+  .output-wrap{}
   .topbar{padding:28px 20px 18px;}
   .topbar h1{font-size:26px;font-weight:500;margin:0;color:var(--md-primary);}
   .topbar p{margin:4px 0 0;font-size:14px;color:var(--md-on-surface-variant);}
@@ -66,68 +67,89 @@
   .output-box.loading .loading{display:flex;}
   #outputImg{display:none;width:100%;height:100%;object-fit:contain;}
   .divider{height:1px;background:var(--md-surface-variant);margin:18px 0;}
+
+  /* ---------------- wide-screen / laptop layout ---------------- */
+  @media (min-width: 960px){
+    .app{
+      max-width:1400px;
+      display:grid;
+      grid-template-columns:520px 1fr;
+      align-items:start;
+      gap:32px;
+      padding:24px 32px 24px;
+    }
+    .controls{min-width:0;}
+    .topbar{padding:4px 4px 18px;}
+    .output-wrap{position:sticky;top:24px;height:calc(100vh - 48px);}
+    .output-wrap .section{padding:0;height:100%;margin-bottom:0;}
+    .output-box{height:100%;aspect-ratio:unset;}
+  }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <div class="topbar">
-    <h1>Plane</h1>
-    <p>Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
-    <span class="badge">Rendered by the Python engine</span>
-  </div>
+  <div class="controls">
+    <div class="topbar">
+      <h1>Plane</h1>
+      <p>Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
+      <span class="badge">Rendered by the Python engine</span>
+    </div>
 
-  <div class="section">
-    <div class="panel">
-      <div class="field-label">Equation</div>
-      <div class="eq-row">
-        <span>w =</span>
-        <input id="eqInput" type="text" value="z**2" spellcheck="false" autocomplete="off" />
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Equation</div>
+        <div class="eq-row">
+          <span>w =</span>
+          <input id="eqInput" type="text" value="z**2" spellcheck="false" autocomplete="off" />
+        </div>
+        <div id="eqError"></div>
       </div>
-      <div id="eqError"></div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Rotation matrix — [m°, n°]</div>
+        <div class="rot-row">
+          <label for="azSlider">m · azimuth</label>
+          <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
+          <span class="val" id="azVal">45°</span>
+        </div>
+        <div class="rot-row">
+          <label for="elSlider">n · elevation</label>
+          <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
+          <span class="val" id="elVal">45°</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Color plane</div>
+        <div class="tabs" id="colorTabs">
+          <button class="tab" data-key="x">x</button>
+          <button class="tab" data-key="y">y</button>
+          <button class="tab" data-key="a">im(a)</button>
+          <button class="tab active" data-key="b">im(b)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="action-btn" id="generateBtn">Generate image</button>
     </div>
   </div>
 
-  <div class="section">
-    <div class="panel">
-      <div class="field-label">Rotation matrix — [m°, n°]</div>
-      <div class="rot-row">
-        <label for="azSlider">m · azimuth</label>
-        <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
-        <span class="val" id="azVal">45°</span>
+  <div class="output-wrap">
+    <div class="section">
+      <div class="output-box empty-state" id="outputBox">
+        <div class="empty" id="emptyState">
+          <div class="icon">◔</div>
+          <div>Your rendered surface will appear here</div>
+        </div>
+        <img id="outputImg" alt="Rendered complex surface" />
+        <div class="loading" id="loadingState">Rendering on the Python engine…</div>
       </div>
-      <div class="rot-row">
-        <label for="elSlider">n · elevation</label>
-        <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
-        <span class="val" id="elVal">45°</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="panel">
-      <div class="field-label">Color plane</div>
-      <div class="tabs" id="colorTabs">
-        <button class="tab" data-key="x">x</button>
-        <button class="tab" data-key="y">y</button>
-        <button class="tab" data-key="a">im(a)</button>
-        <button class="tab active" data-key="b">im(b)</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <button class="action-btn" id="generateBtn">Generate image</button>
-  </div>
-
-  <div class="section">
-    <div class="output-box empty-state" id="outputBox">
-      <div class="empty" id="emptyState">
-        <div class="icon">◔</div>
-        <div>Your rendered surface will appear here</div>
-      </div>
-      <img id="outputImg" alt="Rendered complex surface" />
-      <div class="loading" id="loadingState">Rendering on the Python engine…</div>
     </div>
   </div>
 
