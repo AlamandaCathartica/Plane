@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plane — complex function visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --md-primary:#6750A4;
+    --md-on-primary:#FFFFFF;
+    --md-primary-container:#EADDFF;
+    --md-on-primary-container:#21005E;
+    --md-secondary-container:#D7E3FF;
+    --md-on-secondary-container:#041E49;
+    --md-tertiary-container:#FFDEA8;
+    --md-on-tertiary-container:#402D00;
+    --md-error-container:#FFD9E2;
+    --md-on-error-container:#3E001D;
+    --md-surface:#FFFBFE;
+    --md-surface-dim:#FAF8FD;
+    --md-surface-variant:#F3EDF7;
+    --md-on-surface:#1D1B20;
+    --md-on-surface-variant:#49454F;
+    --md-outline:#CAC4D0;
+    --md-outline-strong:#79747E;
+    --radius-lg:24px;
+    --radius-md:16px;
+    --radius-sm:10px;
+    --font: 'Roboto', system-ui, sans-serif;
+    --font-mono: 'Roboto Mono', ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);background:var(--md-surface-dim);color:var(--md-on-surface);-webkit-font-smoothing:antialiased;}
+  .app{max-width:520px;margin:0 auto;padding-bottom:48px;}
+  .topbar{padding:28px 20px 18px;}
+  .topbar h1{font-size:26px;font-weight:500;margin:0;color:var(--md-primary);}
+  .topbar p{margin:4px 0 0;font-size:14px;color:var(--md-on-surface-variant);}
+  .badge{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:100px;background:var(--md-tertiary-container);color:var(--md-on-tertiary-container);font-size:11px;font-weight:500;}
+  .section{padding:0 16px;margin-bottom:16px;}
+  .panel{background:var(--md-surface);border-radius:var(--radius-lg);padding:18px 16px;}
+  .field-label{font-size:12px;color:var(--md-on-surface-variant);margin:0 0 8px;}
+  .eq-row{display:flex;align-items:center;gap:10px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:4px 4px 4px 16px;}
+  .eq-row span{font-family:var(--font-mono);font-size:15px;color:var(--md-on-surface-variant);flex-shrink:0;}
+  .eq-row input{flex:1;border:none;background:none;font-family:var(--font-mono);font-size:15px;color:var(--md-on-surface);padding:12px 0;outline:none;min-width:0;}
+  .eq-row input:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:6px;}
+  .error-box{background:var(--md-error-container);color:var(--md-on-error-container);border-radius:var(--radius-sm);padding:10px 14px;font-size:12.5px;margin-top:10px;}
+  .rot-row{display:flex;align-items:center;gap:12px;margin-top:14px;}
+  .rot-row:first-of-type{margin-top:0;}
+  .rot-row label{font-size:13px;color:var(--md-on-surface);width:110px;flex-shrink:0;}
+  .rot-row input[type="range"]{flex:1;accent-color:var(--md-primary);}
+  .rot-row .val{font-family:var(--font-mono);font-size:12.5px;color:var(--md-on-surface-variant);width:44px;text-align:right;flex-shrink:0;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab{flex:1 1 auto;padding:9px 10px;border-radius:100px;font-size:13px;font-weight:500;color:var(--md-on-surface-variant);background:transparent;border:1px solid var(--md-outline);cursor:pointer;white-space:nowrap;font-family:var(--font);text-align:center;}
+  .tab.active{background:var(--md-primary);border-color:var(--md-primary);color:var(--md-on-primary);}
+  .action-btn{display:block;width:100%;border:none;border-radius:100px;padding:13px;font-family:var(--font);font-size:14px;font-weight:500;background:var(--md-primary);color:var(--md-on-primary);cursor:pointer;}
+  .action-btn:active{transform:scale(0.98);}
+  .action-btn:disabled{opacity:0.5;cursor:default;}
+  .output-box{position:relative;width:100%;aspect-ratio:1/1;border-radius:var(--radius-lg);overflow:hidden;background:var(--md-surface);}
+  .output-box.empty-state{border:1.5px dashed var(--md-outline-strong);}
+  .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--md-on-surface-variant);font-size:13px;text-align:center;padding:0 24px;}
+  .empty .icon{font-size:30px;opacity:0.7;}
+  .loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(250,248,253,0.85);color:var(--md-on-surface-variant);font-size:13px;}
+  .output-box.loading .loading{display:flex;}
+  #outputImg{display:none;width:100%;height:100%;object-fit:contain;}
+  .divider{height:1px;background:var(--md-surface-variant);margin:18px 0;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <h1>Plane</h1>
+    <p>Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
+    <span class="badge">Rendered by the Python engine</span>
+  </div>
+
+  <div class="section">
+    <div class="panel">
+      <div class="field-label">Equation</div>
+      <div class="eq-row">
+        <span>w =</span>
+        <input id="eqInput" type="text" value="z**2" spellcheck="false" autocomplete="off" />
+      </div>
+      <div id="eqError"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="panel">
+      <div class="field-label">Rotation matrix — [m°, n°]</div>
+      <div class="rot-row">
+        <label for="azSlider">m · azimuth</label>
+        <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
+        <span class="val" id="azVal">45°</span>
+      </div>
+      <div class="rot-row">
+        <label for="elSlider">n · elevation</label>
+        <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
+        <span class="val" id="elVal">45°</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="panel">
+      <div class="field-label">Color plane</div>
+      <div class="tabs" id="colorTabs">
+        <button class="tab" data-key="x">x</button>
+        <button class="tab" data-key="y">y</button>
+        <button class="tab" data-key="a">im(a)</button>
+        <button class="tab active" data-key="b">im(b)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <button class="action-btn" id="generateBtn">Generate image</button>
+  </div>
+
+  <div class="section">
+    <div class="output-box empty-state" id="outputBox">
+      <div class="empty" id="emptyState">
+        <div class="icon">◔</div>
+        <div>Your rendered surface will appear here</div>
+      </div>
+      <img id="outputImg" alt="Rendered complex surface" />
+      <div class="loading" id="loadingState">Rendering on the Python engine…</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let hasImage = false;
+let colorKey = "b";
+
+const azSlider = document.getElementById("azSlider");
+const elSlider = document.getElementById("elSlider");
+const azVal = document.getElementById("azVal");
+const elVal = document.getElementById("elVal");
+const eqInput = document.getElementById("eqInput");
+const eqError = document.getElementById("eqError");
+const generateBtn = document.getElementById("generateBtn");
+const outputBox = document.getElementById("outputBox");
+const emptyState = document.getElementById("emptyState");
+const outputImg = document.getElementById("outputImg");
+
+function showEmpty() {
+  emptyState.style.display = "flex";
+  outputImg.style.display = "none";
+  outputBox.classList.add("empty-state");
+}
+function showImage() {
+  emptyState.style.display = "none";
+  outputImg.style.display = "block";
+  outputBox.classList.remove("empty-state");
+}
+
+async function requestRender() {
+  eqError.innerHTML = "";
+  outputBox.classList.add("loading");
+  generateBtn.disabled = true;
+  try {
+    const res = await fetch("/api/render", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        equation: eqInput.value,
+        m: parseFloat(azSlider.value),
+        n: parseFloat(elSlider.value),
+        color: colorKey,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    outputImg.src = data.image;
+    hasImage = true;
+    showImage();
+  } catch (err) {
+    hasImage = false;
+    showEmpty();
+    eqError.innerHTML = `<div class="error-box">${err.message}</div>`;
+  } finally {
+    outputBox.classList.remove("loading");
+    generateBtn.disabled = false;
+  }
+}
+
+azSlider.addEventListener("input", () => { azVal.textContent = azSlider.value + "°"; });
+elSlider.addEventListener("input", () => { elVal.textContent = elSlider.value + "°"; });
+// re-render once the person releases the slider, only if an image already exists
+azSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
+elSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
+
+document.getElementById("colorTabs").addEventListener("click", (e) => {
+  const btn = e.target.closest(".tab");
+  if (!btn) return;
+  document.querySelectorAll("#colorTabs .tab").forEach((t) => t.classList.remove("active"));
+  btn.classList.add("active");
+  colorKey = btn.dataset.key;
+  if (hasImage) requestRender();
+});
+
+generateBtn.addEventListener("click", requestRender);
+</script>
+</body>
+</html>
