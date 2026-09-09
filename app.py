@@ -1,21 +1,10 @@
 """
-Plane — complex function visualizer, Python backend
-=====================================================
-
-w = f(z), where z = x + i*a (input) and w = y + i*b (output).
-
-The frontend (templates/index.html) only collects: the equation, the
-rotation matrix [m°, n°], and which of {x, y, im(a), im(b)} should be
-used as the color channel. Every number is crunched here — numpy
-builds the grid and evaluates f(z), matplotlib renders and colors the
-3D surface — and the result is shipped back to the browser as a PNG.
-
-Run:
     pip install flask numpy matplotlib
     python app.py
 Then open http://127.0.0.1:5000
 """
 
+from matplotlib import axes
 import base64
 import io
 import re
@@ -50,9 +39,6 @@ SAFE_NAMES = {
 
 
 def compile_equation(text):
-    """Turn a user-supplied string like 'z^2' or 'sin(z)/z' into a
-    numpy-vectorized function of z. Only whitelisted names are exposed;
-    everything else is rejected before eval ever runs."""
     text = (text or "").strip()
     if not text:
         raise ValueError("Enter an equation.")
@@ -127,6 +113,10 @@ def render_png(fields, color_key, m, n):
     ax.tick_params(labelsize=7)
     ax.set_facecolor("#FFFBFE")
     fig.patch.set_facecolor("#FFFBFE")
+    ax.xaxis.pane.set_facecolor("#FFFFFF")
+    ax.yaxis.pane.set_facecolor("#FFFFFF")
+    ax.zaxis.pane.set_facecolor("#FFFFFF")
+    # ax.grid(True)
 
     buf = io.BytesIO()
     fig.savefig(buf, format="png", facecolor=fig.get_facecolor())
