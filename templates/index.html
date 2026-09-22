@@ -53,6 +53,8 @@
   .rot-row label{font-size:13px;color:var(--md-on-surface);width:110px;flex-shrink:0;}
   .rot-row input[type="range"]{flex:1;accent-color:var(--md-primary);}
   .rot-row .val{font-family:var(--font-mono);font-size:12.5px;color:var(--md-on-surface-variant);width:44px;text-align:right;flex-shrink:0;}
+  .val-input{font-family:var(--font-mono);font-size:12.5px;color:var(--md-on-surface);width:52px;text-align:right;flex-shrink:0;border:1px solid var(--md-outline);background:var(--md-surface-variant);border-radius:8px;padding:5px 6px;outline:none;}
+  .val-input:focus-visible{outline:2px solid var(--md-primary);outline-offset:1px;}
   .tabs{display:flex;gap:6px;flex-wrap:wrap;}
   .tab{flex:1 1 auto;padding:9px 10px;border-radius:100px;font-size:13px;font-weight:500;color:var(--md-on-surface-variant);background:transparent;border:1px solid var(--md-outline);cursor:pointer;white-space:nowrap;font-family:var(--font);text-align:center;}
   .tab.active{background:var(--md-primary);border-color:var(--md-primary);color:var(--md-on-primary);}
@@ -67,6 +69,19 @@
   .output-box.loading .loading{display:flex;}
   #outputImg{display:none;width:100%;height:100%;object-fit:contain;}
   .divider{height:1px;background:var(--md-surface-variant);margin:18px 0;}
+  .range-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .range-field{display:flex;align-items:center;gap:8px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:2px 12px;}
+  .range-field label{font-family:var(--font-mono);font-size:13px;color:var(--md-on-surface-variant);flex-shrink:0;}
+  .range-field input{flex:1;width:0;border:none;background:none;font-family:var(--font-mono);font-size:14px;color:var(--md-on-surface);padding:10px 0;outline:none;}
+  .range-field input:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:6px;}
+  .range-field input::-webkit-inner-spin-button,.range-field input::-webkit-outer-spin-button{opacity:0.6;}
+  .hint{font-size:11.5px;color:var(--md-on-surface-variant);margin:10px 0 0;}
+  .axis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .axis-field{display:flex;align-items:center;gap:8px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:2px 12px;}
+  .axis-field label{font-size:12px;font-weight:500;color:var(--md-on-surface-variant);flex-shrink:0;width:14px;}
+  .axis-field select{flex:1;width:0;border:none;background:none;font-family:var(--font-mono);font-size:13px;color:var(--md-on-surface);padding:10px 0;outline:none;}
+  .anim-view-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;margin-bottom:4px;}
+  .secondary-btn{background:var(--md-secondary-container);color:var(--md-on-secondary-container);}
 
   /* ---------------- wide-screen / laptop layout ---------------- */
   @media (min-width: 960px){
@@ -93,7 +108,7 @@
     <div class="topbar">
       <h1>Plane</h1>
       <p>Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
-      <span class="badge">Rendered by the Python engine</span>
+      <span class="badge">Python backend · Matplotlib</span>
     </div>
 
     <div class="section">
@@ -109,30 +124,129 @@
 
     <div class="section">
       <div class="panel">
-        <div class="field-label">Rotation matrix — [m°, n°]</div>
-        <div class="rot-row">
-          <label for="azSlider">m · azimuth</label>
-          <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
-          <span class="val" id="azVal">45°</span>
+        <div class="field-label">Domain range (Re / Im input)</div>
+        <div class="range-grid">
+          <div class="range-field">
+            <label for="xMinInput">x₁</label>
+            <input id="xMinInput" type="number" step="0.1" value="-2" />
+          </div>
+          <div class="range-field">
+            <label for="xMaxInput">x₂</label>
+            <input id="xMaxInput" type="number" step="0.1" value="2" />
+          </div>
+          <div class="range-field">
+            <label for="yMinInput">y₁</label>
+            <input id="yMinInput" type="number" step="0.1" value="-2" />
+          </div>
+          <div class="range-field">
+            <label for="yMaxInput">y₂</label>
+            <input id="yMaxInput" type="number" step="0.1" value="2" />
+          </div>
         </div>
-        <div class="rot-row">
-          <label for="elSlider">n · elevation</label>
-          <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
-          <span class="val" id="elVal">45°</span>
-        </div>
+        <div id="rangeError"></div>
       </div>
     </div>
 
     <div class="section">
       <div class="panel">
-        <div class="field-label">Color plane</div>
-        <div class="tabs" id="colorTabs">
-          <button class="tab" data-key="x">x</button>
-          <button class="tab" data-key="y">y</button>
-          <button class="tab" data-key="a">im(a)</button>
-          <button class="tab active" data-key="b">im(b)</button>
+        <div class="field-label">Accuracy (grid resolution)</div>
+        <div class="rot-row" style="margin-top:0;">
+          <label for="resSlider">points / side</label>
+          <input id="resSlider" type="range" min="10" max="150" step="1" value="60" />
+          <span class="val" id="resVal">60</span>
         </div>
+        <p class="hint">Higher = smoother surface, more polygons, slower render.</p>
       </div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Rotation matrix — [m°, n°]</div>
+        <div class="rot-row">
+          <label for="azSlider">m · azimuth</label>
+          <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
+          <input class="val-input" id="azNumInput" type="number" step="1" value="45" />
+        </div>
+        <div class="rot-row">
+          <label for="elSlider">n · elevation</label>
+          <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
+          <input class="val-input" id="elNumInput" type="number" step="1" value="45" />
+        </div>
+        <p class="hint">Type any value, including past ±360° — it wraps with modulo (e.g. 720° = 0°).</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Axes</div>
+        <div class="axis-grid">
+          <div class="axis-field">
+            <label for="xAxisSel">X</label>
+            <select id="xAxisSel"></select>
+          </div>
+          <div class="axis-field">
+            <label for="yAxisSel">Y</label>
+            <select id="yAxisSel"></select>
+          </div>
+          <div class="axis-field">
+            <label for="zAxisSel">Z</label>
+            <select id="zAxisSel"></select>
+          </div>
+          <div class="axis-field">
+            <label for="colorAxisSel">Color</label>
+            <select id="colorAxisSel"></select>
+          </div>
+        </div>
+        <div id="axisError"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="panel">
+        <div class="field-label">Animate — rotate between two views</div>
+        <div class="rot-row" style="margin-top:0;">
+          <label>start [m°, n°]</label>
+        </div>
+        <div class="anim-view-grid">
+          <div class="range-field">
+            <label for="m0Input">m₀</label>
+            <input id="m0Input" type="number" step="1" value="-60" />
+          </div>
+          <div class="range-field">
+            <label for="n0Input">n₀</label>
+            <input id="n0Input" type="number" step="1" value="20" />
+          </div>
+        </div>
+        <div class="rot-row">
+          <label>end [m°, n°]</label>
+        </div>
+        <div class="anim-view-grid">
+          <div class="range-field">
+            <label for="m1Input">m₁</label>
+            <input id="m1Input" type="number" step="1" value="300" />
+          </div>
+          <div class="range-field">
+            <label for="n1Input">n₁</label>
+            <input id="n1Input" type="number" step="1" value="20" />
+          </div>
+        </div>
+        <div class="rot-row">
+          <label for="framesSlider">frames</label>
+          <input id="framesSlider" type="range" min="4" max="60" step="1" value="24" />
+          <span class="val" id="framesVal">24</span>
+        </div>
+        <div class="rot-row">
+          <label for="frameMsSlider">ms / frame</label>
+          <input id="frameMsSlider" type="range" min="30" max="1000" step="10" value="80" />
+          <span class="val" id="frameMsVal">80</span>
+        </div>
+        <div id="animError"></div>
+        <p class="hint">m/n wrap with modulo too — e.g. 300° = -60°, 720° = 0°.</p>
+      </div>
+    </div>
+
+    <div class="section">
+      <button class="action-btn secondary-btn" id="animateBtn" type="button">Generate GIF</button>
     </div>
 
     <div class="section">
@@ -157,18 +271,97 @@
 
 <script>
 let hasImage = false;
-let colorKey = "b";
+
+const AXIS_OPTIONS = [
+  { key: "x", label: "x — Re(input)" },
+  { key: "a", label: "im(a) — Im(input)" },
+  { key: "y", label: "y — Re(output)" },
+  { key: "b", label: "im(b) — Im(output)" },
+  { key: "r", label: "|w| — magnitude" },
+  { key: "p", label: "arg(w) — phase" },
+];
 
 const azSlider = document.getElementById("azSlider");
 const elSlider = document.getElementById("elSlider");
-const azVal = document.getElementById("azVal");
-const elVal = document.getElementById("elVal");
+const azNumInput = document.getElementById("azNumInput");
+const elNumInput = document.getElementById("elNumInput");
 const eqInput = document.getElementById("eqInput");
 const eqError = document.getElementById("eqError");
 const generateBtn = document.getElementById("generateBtn");
 const outputBox = document.getElementById("outputBox");
 const emptyState = document.getElementById("emptyState");
 const outputImg = document.getElementById("outputImg");
+
+const xMinInput = document.getElementById("xMinInput");
+const xMaxInput = document.getElementById("xMaxInput");
+const yMinInput = document.getElementById("yMinInput");
+const yMaxInput = document.getElementById("yMaxInput");
+const rangeError = document.getElementById("rangeError");
+const resSlider = document.getElementById("resSlider");
+const resVal = document.getElementById("resVal");
+
+const xAxisSel = document.getElementById("xAxisSel");
+const yAxisSel = document.getElementById("yAxisSel");
+const zAxisSel = document.getElementById("zAxisSel");
+const colorAxisSel = document.getElementById("colorAxisSel");
+const axisError = document.getElementById("axisError");
+
+[xAxisSel, yAxisSel, zAxisSel, colorAxisSel].forEach((sel) => {
+  AXIS_OPTIONS.forEach((opt) => {
+    const el = document.createElement("option");
+    el.value = opt.key;
+    el.textContent = opt.label;
+    sel.appendChild(el);
+  });
+});
+xAxisSel.value = "x";
+yAxisSel.value = "y";
+zAxisSel.value = "a";
+colorAxisSel.value = "b";
+
+function validateAxes() {
+  const x = xAxisSel.value, y = yAxisSel.value, z = zAxisSel.value;
+  if (new Set([x, y, z]).size < 3) {
+    axisError.innerHTML = `<div class="error-box">X, Y, and Z axes must all be different.</div>`;
+    return false;
+  }
+  axisError.innerHTML = "";
+  return true;
+}
+
+[xAxisSel, yAxisSel, zAxisSel, colorAxisSel].forEach((sel) => {
+  sel.addEventListener("change", () => {
+    if (!validateAxes()) return;
+    if (hasImage) requestRender();
+  });
+});
+
+function validateRange() {
+  const xMin = parseFloat(xMinInput.value);
+  const xMax = parseFloat(xMaxInput.value);
+  const yMin = parseFloat(yMinInput.value);
+  const yMax = parseFloat(yMaxInput.value);
+  if ([xMin, xMax, yMin, yMax].some((v) => Number.isNaN(v))) {
+    rangeError.innerHTML = `<div class="error-box">Range values must be numbers.</div>`;
+    return null;
+  }
+  if (xMax <= xMin) {
+    rangeError.innerHTML = `<div class="error-box">x₂ must be greater than x₁.</div>`;
+    return null;
+  }
+  if (yMax <= yMin) {
+    rangeError.innerHTML = `<div class="error-box">y₂ must be greater than y₁.</div>`;
+    return null;
+  }
+  rangeError.innerHTML = "";
+  return { xMin, xMax, yMin, yMax };
+}
+
+resSlider.addEventListener("input", () => { resVal.textContent = resSlider.value; });
+resSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
+[xMinInput, xMaxInput, yMinInput, yMaxInput].forEach((el) => {
+  el.addEventListener("change", () => { if (hasImage && validateRange()) requestRender(); });
+});
 
 function showEmpty() {
   emptyState.style.display = "flex";
@@ -181,8 +374,23 @@ function showImage() {
   outputBox.classList.remove("empty-state");
 }
 
+// Some mobile browsers (notably iOS/Android webviews) only decode the first
+// frame of a GIF if its src is assigned while the <img> is hidden or already
+// mid-decode of a previous image. Make the element visible first, clear any
+// prior src, force a reflow, then assign the new src so the browser always
+// starts a fresh decode/animation from a visible element.
+function displayImage(dataUri) {
+  showImage();
+  outputImg.removeAttribute("src");
+  void outputImg.offsetWidth; // force reflow
+  outputImg.src = dataUri;
+}
+
 async function requestRender() {
   eqError.innerHTML = "";
+  const range = validateRange();
+  if (!range) return;
+  if (!validateAxes()) return;
   outputBox.classList.add("loading");
   generateBtn.disabled = true;
   try {
@@ -191,16 +399,23 @@ async function requestRender() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         equation: eqInput.value,
-        m: parseFloat(azSlider.value),
-        n: parseFloat(elSlider.value),
-        color: colorKey,
+        m: normalizeAngle(parseFloat(azNumInput.value), -180, 180),
+        n: normalizeAngle(parseFloat(elNumInput.value), -90, 90),
+        x_axis: xAxisSel.value,
+        y_axis: yAxisSel.value,
+        z_axis: zAxisSel.value,
+        color: colorAxisSel.value,
+        re_min: range.xMin,
+        re_max: range.xMax,
+        im_min: range.yMin,
+        im_max: range.yMax,
+        resolution: parseInt(resSlider.value, 10),
       }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Something went wrong.");
-    outputImg.src = data.image;
     hasImage = true;
-    showImage();
+    displayImage(data.image);
   } catch (err) {
     hasImage = false;
     showEmpty();
@@ -211,22 +426,115 @@ async function requestRender() {
   }
 }
 
-azSlider.addEventListener("input", () => { azVal.textContent = azSlider.value + "°"; });
-elSlider.addEventListener("input", () => { elVal.textContent = elSlider.value + "°"; });
+// Wrap v into [lo, hi) using true modulo arithmetic, so e.g. 720 deg
+// normalizes the same as 0 deg, -450 the same as -90, etc. Mirrors the
+// backend's normalize_angle() so what you see typed matches what renders.
+function normalizeAngle(v, lo, hi) {
+  const period = hi - lo;
+  return (((v - lo) % period) + period) % period + lo;
+}
+
+azSlider.addEventListener("input", () => { azNumInput.value = azSlider.value; });
+elSlider.addEventListener("input", () => { elNumInput.value = elSlider.value; });
 // re-render once the person releases the slider, only if an image already exists
 azSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
 elSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
 
-document.getElementById("colorTabs").addEventListener("click", (e) => {
-  const btn = e.target.closest(".tab");
-  if (!btn) return;
-  document.querySelectorAll("#colorTabs .tab").forEach((t) => t.classList.remove("active"));
-  btn.classList.add("active");
-  colorKey = btn.dataset.key;
+// Keyboard-typed values use modulo logic: any number is accepted and kept
+// on screen exactly as typed (e.g. "720" stays "720"), but the slider moves
+// to the equivalent wrapped position (-180..180 for azimuth, -90..90 for
+// elevation) and that wrapped value is what actually gets rendered.
+azNumInput.addEventListener("change", () => {
+  const v = parseFloat(azNumInput.value);
+  if (Number.isNaN(v)) { azNumInput.value = azSlider.value; return; }
+  azSlider.value = normalizeAngle(v, -180, 180);
+  if (hasImage) requestRender();
+});
+elNumInput.addEventListener("change", () => {
+  const v = parseFloat(elNumInput.value);
+  if (Number.isNaN(v)) { elNumInput.value = elSlider.value; return; }
+  elSlider.value = normalizeAngle(v, -90, 90);
   if (hasImage) requestRender();
 });
 
-generateBtn.addEventListener("click", requestRender);
+document.getElementById("generateBtn").addEventListener("click", requestRender);
+
+const m0Input = document.getElementById("m0Input");
+const n0Input = document.getElementById("n0Input");
+const m1Input = document.getElementById("m1Input");
+const n1Input = document.getElementById("n1Input");
+const framesSlider = document.getElementById("framesSlider");
+const framesVal = document.getElementById("framesVal");
+const frameMsSlider = document.getElementById("frameMsSlider");
+const frameMsVal = document.getElementById("frameMsVal");
+const animError = document.getElementById("animError");
+const animateBtn = document.getElementById("animateBtn");
+const loadingState = document.getElementById("loadingState");
+
+framesSlider.addEventListener("input", () => { framesVal.textContent = framesSlider.value; });
+frameMsSlider.addEventListener("input", () => { frameMsVal.textContent = frameMsSlider.value; });
+
+// No display normalization here on purpose -- these fields have no slider to
+// sync, so whatever you type (e.g. "720") stays on screen exactly as typed.
+// The modulo wrap is applied only when building the request, in requestAnimate().
+
+async function requestAnimate() {
+  animError.innerHTML = "";
+  eqError.innerHTML = "";
+  const range = validateRange();
+  if (!range) return;
+  if (!validateAxes()) return;
+
+  const m0 = normalizeAngle(parseFloat(m0Input.value), -180, 180);
+  const n0 = normalizeAngle(parseFloat(n0Input.value), -90, 90);
+  const m1 = normalizeAngle(parseFloat(m1Input.value), -180, 180);
+  const n1 = normalizeAngle(parseFloat(n1Input.value), -90, 90);
+  if ([m0, n0, m1, n1].some((v) => Number.isNaN(v))) {
+    animError.innerHTML = `<div class="error-box">Start/end angles must be numbers.</div>`;
+    return;
+  }
+
+  loadingState.textContent = "Rendering frames and assembling GIF…";
+  outputBox.classList.add("loading");
+  animateBtn.disabled = true;
+  generateBtn.disabled = true;
+  try {
+    const res = await fetch("/api/animate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        equation: eqInput.value,
+        x_axis: xAxisSel.value,
+        y_axis: yAxisSel.value,
+        z_axis: zAxisSel.value,
+        color: colorAxisSel.value,
+        re_min: range.xMin,
+        re_max: range.xMax,
+        im_min: range.yMin,
+        im_max: range.yMax,
+        resolution: parseInt(resSlider.value, 10),
+        m0, n0, m1, n1,
+        frames: parseInt(framesSlider.value, 10),
+        frame_ms: parseInt(frameMsSlider.value, 10),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Something went wrong.");
+    hasImage = true;
+    displayImage(data.image);
+  } catch (err) {
+    hasImage = false;
+    showEmpty();
+    animError.innerHTML = `<div class="error-box">${err.message}</div>`;
+  } finally {
+    outputBox.classList.remove("loading");
+    loadingState.textContent = "Rendering on the Python engine…";
+    animateBtn.disabled = false;
+    generateBtn.disabled = false;
+  }
+}
+
+animateBtn.addEventListener("click", requestAnimate);
 </script>
 </body>
 </html>
