@@ -3,98 +3,257 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="light dark" />
+<script>
+  // Apply saved theme (or the system preference) before first paint.
+  (function () {
+    var t = null;
+    try { t = localStorage.getItem("plane-theme"); } catch (e) {}
+    if (t !== "light" && t !== "dark") {
+      t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  })();
+</script>
 <title>Plane — complex function visualizer</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --md-primary:#6750A4;
-    --md-on-primary:#FFFFFF;
-    --md-primary-container:#EADDFF;
-    --md-on-primary-container:#21005E;
-    --md-secondary-container:#D7E3FF;
-    --md-on-secondary-container:#041E49;
-    --md-tertiary-container:#FFDEA8;
-    --md-on-tertiary-container:#402D00;
-    --md-error-container:#FFD9E2;
-    --md-on-error-container:#3E001D;
-    --md-surface:#FFFBFE;
-    --md-surface-dim:#FAF8FD;
-    --md-surface-variant:#F3EDF7;
-    --md-on-surface:#1D1B20;
-    --md-on-surface-variant:#49454F;
-    --md-outline:#CAC4D0;
-    --md-outline-strong:#79747E;
-    --radius-lg:24px;
-    --radius-md:16px;
-    --radius-sm:10px;
-    --font: 'Roboto', system-ui, sans-serif;
-    --font-mono: 'Roboto Mono', ui-monospace, monospace;
+<!-- Icon font used by <md-icon> -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block" rel="stylesheet">
+
+<!-- Material Web 2.5.0 (https://github.com/material-components/material-web) -->
+<script type="importmap">
+{
+  "imports": {
+    "@material/web/": "https://esm.run/@material/web@2.5.0/"
   }
+}
+</script>
+<script type="module">
+  import '@material/web/all.js';
+  import {styles as typescaleStyles} from '@material/web/typography/md-typescale-styles.js';
+  document.adoptedStyleSheets.push(typescaleStyles.styleSheet);
+</script>
+
+<style>
+  /* =====================================================================
+     THEME — Material 3 baseline scheme (seed #6750A4).
+     Everything below is a standard --md-sys-* / --md-ref-* token, so every
+     md-* component picks it up automatically. To re-theme the whole app,
+     replace the color block with output from Material Theme Builder.
+     ===================================================================== */
+  :root {
+    color-scheme: light dark;
+
+    /* Typeface */
+    --md-ref-typeface-brand: 'Roboto';
+    --md-ref-typeface-plain: 'Roboto';
+
+    /* Shape (library defaults, listed so the app can adjust them in one place) */
+    --md-sys-shape-corner-extra-large: 28px;
+
+    /* Color — light */
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary: #625B71;
+    --md-sys-color-on-secondary: #FFFFFF;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-tertiary: #7D5260;
+    --md-sys-color-on-tertiary: #FFFFFF;
+    --md-sys-color-tertiary-container: #FFD8E4;
+    --md-sys-color-on-tertiary-container: #31111D;
+    --md-sys-color-error: #B3261E;
+    --md-sys-color-on-error: #FFFFFF;
+    --md-sys-color-error-container: #F9DEDC;
+    --md-sys-color-on-error-container: #410E0B;
+    --md-sys-color-background: #FEF7FF;
+    --md-sys-color-on-background: #1D1B20;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-variant: #E7E0EC;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-surface-dim: #DED8E1;
+    --md-sys-color-surface-bright: #FEF7FF;
+    --md-sys-color-surface-container-lowest: #FFFFFF;
+    --md-sys-color-surface-container-low: #F7F2FA;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-surface-container-highest: #E6E0E9;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-inverse-surface: #322F35;
+    --md-sys-color-inverse-on-surface: #F5EFF7;
+    --md-sys-color-inverse-primary: #D0BCFF;
+    --md-sys-color-shadow: #000000;
+    --md-sys-color-scrim: #000000;
+    --md-sys-color-surface-tint: #6750A4;
+
+    /* App-level (not part of the Material spec) */
+    --font-mono: 'Roboto Mono', ui-monospace, monospace;
+    --output-backdrop: #FFFFFF;
+  }
+
+  :root[data-theme="light"] { color-scheme: light; }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+      --md-sys-color-primary: #D0BCFF;
+      --md-sys-color-on-primary: #381E72;
+      --md-sys-color-primary-container: #4F378B;
+      --md-sys-color-on-primary-container: #EADDFF;
+      --md-sys-color-secondary: #CCC2DC;
+      --md-sys-color-on-secondary: #332D41;
+      --md-sys-color-secondary-container: #4A4458;
+      --md-sys-color-on-secondary-container: #E8DEF8;
+      --md-sys-color-tertiary: #EFB8C8;
+      --md-sys-color-on-tertiary: #492532;
+      --md-sys-color-tertiary-container: #633B48;
+      --md-sys-color-on-tertiary-container: #FFD8E4;
+      --md-sys-color-error: #F2B8B5;
+      --md-sys-color-on-error: #601410;
+      --md-sys-color-error-container: #8C1D18;
+      --md-sys-color-on-error-container: #F9DEDC;
+      --md-sys-color-background: #141218;
+      --md-sys-color-on-background: #E6E0E9;
+      --md-sys-color-surface: #141218;
+      --md-sys-color-on-surface: #E6E0E9;
+      --md-sys-color-surface-variant: #49454F;
+      --md-sys-color-on-surface-variant: #CAC4D0;
+      --md-sys-color-surface-dim: #141218;
+      --md-sys-color-surface-bright: #3B383E;
+      --md-sys-color-surface-container-lowest: #0F0D13;
+      --md-sys-color-surface-container-low: #1D1B20;
+      --md-sys-color-surface-container: #211F26;
+      --md-sys-color-surface-container-high: #2B2930;
+      --md-sys-color-surface-container-highest: #36343B;
+      --md-sys-color-outline: #938F99;
+      --md-sys-color-outline-variant: #49454F;
+      --md-sys-color-inverse-surface: #E6E0E9;
+      --md-sys-color-inverse-on-surface: #322F35;
+      --md-sys-color-inverse-primary: #6750A4;
+      --md-sys-color-surface-tint: #D0BCFF;
+      --output-backdrop: #FFFFFF; /* rendered plots are drawn on white */
+  }
+
+  /* Monospace for equation / numeric entry — via the components' own tokens */
+  .mono {
+    --md-outlined-text-field-input-text-font: var(--font-mono);
+    --md-outlined-select-text-field-input-text-font: var(--font-mono);
+  }
+
+  /* =====================================================================
+     LAYOUT
+     ===================================================================== */
   *{box-sizing:border-box;}
-  body{margin:0;font-family:var(--font);background:var(--md-surface-dim);color:var(--md-on-surface);-webkit-font-smoothing:antialiased;}
+  html,body{margin:0;}
+  body{
+    font-family: var(--md-ref-typeface-plain), system-ui, sans-serif;
+    background: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    -webkit-font-smoothing: antialiased;
+  }
+
   .app{max-width:520px;margin:0 auto;padding-bottom:48px;}
-  .output-wrap{}
-  .topbar{padding:28px 20px 18px;}
-  .topbar h1{font-size:26px;font-weight:500;margin:0;color:var(--md-primary);}
-  .topbar p{margin:4px 0 0;font-size:14px;color:var(--md-on-surface-variant);}
-  .badge{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:100px;background:var(--md-tertiary-container);color:var(--md-on-tertiary-container);font-size:11px;font-weight:500;}
-  .section{padding:0 16px;margin-bottom:16px;}
-  .panel{background:var(--md-surface);border-radius:var(--radius-lg);padding:18px 16px;}
-  .field-label{font-size:12px;color:var(--md-on-surface-variant);margin:0 0 8px;}
-  .eq-row{display:flex;align-items:center;gap:10px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:4px 4px 4px 16px;}
-  .eq-row span{font-family:var(--font-mono);font-size:15px;color:var(--md-on-surface-variant);flex-shrink:0;}
-  .eq-row input{flex:1;border:none;background:none;font-family:var(--font-mono);font-size:15px;color:var(--md-on-surface);padding:12px 0;outline:none;min-width:0;}
-  .eq-row input:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:6px;}
-  .error-box{background:var(--md-error-container);color:var(--md-on-error-container);border-radius:var(--radius-sm);padding:10px 14px;font-size:12.5px;margin-top:10px;}
-  .rot-row{display:flex;align-items:center;gap:12px;margin-top:14px;}
-  .rot-row:first-of-type{margin-top:0;}
-  .rot-row label{font-size:13px;color:var(--md-on-surface);width:110px;flex-shrink:0;}
-  .rot-row input[type="range"]{flex:1;accent-color:var(--md-primary);}
-  .rot-row .val{font-family:var(--font-mono);font-size:12.5px;color:var(--md-on-surface-variant);width:44px;text-align:right;flex-shrink:0;}
-  .val-input{font-family:var(--font-mono);font-size:12.5px;color:var(--md-on-surface);width:52px;text-align:right;flex-shrink:0;border:1px solid var(--md-outline);background:var(--md-surface-variant);border-radius:8px;padding:5px 6px;outline:none;}
-  .val-input:focus-visible{outline:2px solid var(--md-primary);outline-offset:1px;}
-  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
-  .tab{flex:1 1 auto;padding:9px 10px;border-radius:100px;font-size:13px;font-weight:500;color:var(--md-on-surface-variant);background:transparent;border:1px solid var(--md-outline);cursor:pointer;white-space:nowrap;font-family:var(--font);text-align:center;}
-  .tab.active{background:var(--md-primary);border-color:var(--md-primary);color:var(--md-on-primary);}
-  .action-btn{display:block;width:100%;border:none;border-radius:100px;padding:13px;font-family:var(--font);font-size:14px;font-weight:500;background:var(--md-primary);color:var(--md-on-primary);cursor:pointer;}
-  .action-btn:active{transform:scale(0.98);}
-  .action-btn:disabled{opacity:0.5;cursor:default;}
-  .output-box{position:relative;width:100%;aspect-ratio:1/1;border-radius:var(--radius-lg);overflow:hidden;background:var(--md-surface);}
-  .output-box.empty-state{border:1.5px dashed var(--md-outline-strong);}
-  .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--md-on-surface-variant);font-size:13px;text-align:center;padding:0 24px;}
-  .empty .icon{font-size:30px;opacity:0.7;}
-  .loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(250,248,253,0.85);color:var(--md-on-surface-variant);font-size:13px;}
+
+  /* Single light/dark toggle, pinned to the top-right corner */
+  .theme-toggle{
+    position:fixed;top:12px;right:12px;z-index:10;
+    --md-icon-button-icon-color:var(--md-sys-color-on-surface-variant);
+    background:var(--md-sys-color-surface-container-high);
+    border-radius:var(--md-sys-shape-corner-full);
+  }
+  .topbar{padding-right:64px !important;}
+
+  .topbar{padding:28px 20px 16px;}
+  .topbar h1{margin:0;color:var(--md-sys-color-primary);}
+  .topbar p{margin:4px 0 12px;color:var(--md-sys-color-on-surface-variant);}
+  .tag{
+    display:inline-flex;align-items:center;height:24px;padding:0 10px;
+    border-radius:var(--md-sys-shape-corner-small, 8px);
+    background:var(--md-sys-color-tertiary-container);
+    color:var(--md-sys-color-on-tertiary-container);
+  }
+
+  .section{padding:0 16px;margin-bottom:12px;}
+
+  /* Filled card surface, per the M3 card spec */
+  .panel{
+    background:var(--md-sys-color-surface-container-low);
+    border-radius:var(--md-sys-shape-corner-extra-large);
+    padding:20px 16px;
+    display:flex;flex-direction:column;gap:16px;
+  }
+  .panel-title{margin:0;color:var(--md-sys-color-on-surface);}
+  .hint{margin:0;color:var(--md-sys-color-on-surface-variant);}
+
+  /* Make md-* fields fill their grid cell instead of the 210px default */
+  md-outlined-text-field, md-outlined-select{width:100%;min-width:0;}
+  md-slider{width:100%;min-inline-size:0;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .subhead{margin:0;color:var(--md-sys-color-on-surface-variant);}
+
+  /* Slider rows: label on top, control below */
+  .slider-row{display:grid;grid-template-columns:1fr auto;align-items:center;column-gap:16px;row-gap:0;}
+  .slider-row .row-label{color:var(--md-sys-color-on-surface);}
+  .slider-row .row-value{color:var(--md-sys-color-on-surface-variant);font-family:var(--font-mono);}
+  .slider-row md-slider{grid-column:1 / -1;}
+  /* Variant with a number field next to the slider */
+  .slider-row.with-field{grid-template-columns:1fr 112px;}
+  .slider-row.with-field .row-label{grid-column:1 / -1;margin-bottom:4px;}
+  .slider-row.with-field md-slider{grid-column:1;}
+
+  .error-banner{
+    background:var(--md-sys-color-error-container);
+    color:var(--md-sys-color-on-error-container);
+    border-radius:var(--md-sys-shape-corner-medium, 12px);
+    padding:12px 16px;
+  }
+  .error-banner:empty{display:none;}
+
+  .button-stack{display:flex;flex-direction:column;gap:12px;}
+  .button-stack md-filled-button, .button-stack md-filled-tonal-button{width:100%;--md-filled-button-container-height:48px;--md-filled-tonal-button-container-height:48px;}
+
+  /* =====================================================================
+     OUTPUT
+     ===================================================================== */
+  .output-box{
+    position:relative;width:100%;aspect-ratio:1/1;overflow:hidden;
+    border-radius:var(--md-sys-shape-corner-extra-large);
+    background:var(--md-sys-color-surface-container-lowest);
+  }
+  .output-box.empty-state{
+    background:transparent;
+    border:1px dashed var(--md-sys-color-outline);
+  }
+  .empty{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;padding:0 24px;text-align:center;color:var(--md-sys-color-on-surface-variant);
+  }
+  .empty md-icon{--md-icon-size:40px;color:var(--md-sys-color-primary);}
+  #outputImg{display:none;width:100%;height:100%;object-fit:contain;background:var(--output-backdrop);}
+
+  .loading{
+    position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    background:color-mix(in srgb, var(--md-sys-color-surface) 86%, transparent);
+    color:var(--md-sys-color-on-surface-variant);
+  }
   .output-box.loading .loading{display:flex;}
-  #outputImg{display:none;width:100%;height:100%;object-fit:contain;}
-  .divider{height:1px;background:var(--md-surface-variant);margin:18px 0;}
-  .range-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .range-field{display:flex;align-items:center;gap:8px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:2px 12px;}
-  .range-field label{font-family:var(--font-mono);font-size:13px;color:var(--md-on-surface-variant);flex-shrink:0;}
-  .range-field input{flex:1;width:0;border:none;background:none;font-family:var(--font-mono);font-size:14px;color:var(--md-on-surface);padding:10px 0;outline:none;}
-  .range-field input:focus-visible{outline:2px solid var(--md-primary);outline-offset:2px;border-radius:6px;}
-  .range-field input::-webkit-inner-spin-button,.range-field input::-webkit-outer-spin-button{opacity:0.6;}
-  .hint{font-size:11.5px;color:var(--md-on-surface-variant);margin:10px 0 0;}
-  .axis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .axis-field{display:flex;align-items:center;gap:8px;background:var(--md-surface-variant);border-radius:var(--radius-md);padding:2px 12px;}
-  .axis-field label{font-size:12px;font-weight:500;color:var(--md-on-surface-variant);flex-shrink:0;width:14px;}
-  .axis-field select{flex:1;width:0;border:none;background:none;font-family:var(--font-mono);font-size:13px;color:var(--md-on-surface);padding:10px 0;outline:none;}
-  .anim-view-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;margin-bottom:4px;}
-  .secondary-btn{background:var(--md-secondary-container);color:var(--md-on-secondary-container);}
 
   /* ---------------- wide-screen / laptop layout ---------------- */
   @media (min-width: 960px){
     .app{
       max-width:1870px;
-      display:grid;
-      grid-template-columns:520px 1fr;
-      align-items:start;
-      gap:32px;
-      padding:24px 32px 24px;
+      display:grid;grid-template-columns:520px 1fr;align-items:start;gap:32px;
+      padding:24px 32px;
     }
     .controls{min-width:0;}
-    .topbar{padding:4px 4px 18px;}
+    .topbar{padding:4px 4px 16px;}
     .output-wrap{position:sticky;top:24px;height:calc(100vh - 48px);}
     .output-wrap .section{padding:0;height:100%;margin-bottom:0;}
     .output-box{height:100%;aspect-ratio:unset;}
@@ -102,155 +261,134 @@
 </style>
 </head>
 <body>
+<md-icon-button class="theme-toggle" id="themeToggle" aria-label="Switch to dark mode" title="Switch to dark mode">
+  <md-icon id="themeIcon">dark_mode</md-icon>
+</md-icon-button>
+
 <div class="app">
 
   <div class="controls">
-    <div class="topbar">
-      <h1>Plane</h1>
-      <p>Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
-      <span class="badge">Python backend · Matplotlib</span>
-    </div>
+    <header class="topbar">
+      <h1 class="md-typescale-headline-medium">Plane</h1>
+      <p class="md-typescale-body-medium">Map w = f(z) across four real axes: x, y, im(a), im(b)</p>
+      <span class="tag md-typescale-label-medium">Python backend · Matplotlib</span>
+    </header>
 
+    <!-- Equation -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Equation</div>
-        <div class="eq-row">
-          <span>w =</span>
-          <input id="eqInput" type="text" value="z**2" spellcheck="false" autocomplete="off" />
-        </div>
-        <div id="eqError"></div>
+        <h2 class="panel-title md-typescale-title-medium">Equation</h2>
+        <md-outlined-text-field class="mono" id="eqInput" label="f(z)" prefix-text="w = "
+          value="z**2" spellcheck="false" autocomplete="off" aria-label="Equation"></md-outlined-text-field>
+        <div id="eqError" role="alert"></div>
       </div>
     </div>
 
+    <!-- Domain -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Domain range (Re / Im input)</div>
-        <div class="range-grid">
-          <div class="range-field">
-            <label for="xMinInput">x₁</label>
-            <input id="xMinInput" type="number" step="0.1" value="-2" />
-          </div>
-          <div class="range-field">
-            <label for="xMaxInput">x₂</label>
-            <input id="xMaxInput" type="number" step="0.1" value="2" />
-          </div>
-          <div class="range-field">
-            <label for="yMinInput">y₁</label>
-            <input id="yMinInput" type="number" step="0.1" value="-2" />
-          </div>
-          <div class="range-field">
-            <label for="yMaxInput">y₂</label>
-            <input id="yMaxInput" type="number" step="0.1" value="2" />
-          </div>
+        <h2 class="panel-title md-typescale-title-medium">Domain range</h2>
+        <p class="subhead md-typescale-body-small">Re / Im input</p>
+        <div class="grid-2">
+          <md-outlined-text-field class="mono" id="xMinInput" type="number" step="0.1" label="x₁" value="-2"></md-outlined-text-field>
+          <md-outlined-text-field class="mono" id="xMaxInput" type="number" step="0.1" label="x₂" value="2"></md-outlined-text-field>
+          <md-outlined-text-field class="mono" id="yMinInput" type="number" step="0.1" label="y₁" value="-2"></md-outlined-text-field>
+          <md-outlined-text-field class="mono" id="yMaxInput" type="number" step="0.1" label="y₂" value="2"></md-outlined-text-field>
         </div>
-        <div id="rangeError"></div>
+        <div id="rangeError" role="alert"></div>
       </div>
     </div>
 
+    <!-- Accuracy -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Accuracy (grid resolution)</div>
-        <div class="rot-row" style="margin-top:0;">
-          <label for="resSlider">points / side</label>
-          <input id="resSlider" type="range" min="10" max="150" step="1" value="60" />
-          <span class="val" id="resVal">60</span>
+        <h2 class="panel-title md-typescale-title-medium">Accuracy</h2>
+        <div class="slider-row">
+          <span class="row-label md-typescale-body-medium" id="resLabel">Points per side</span>
+          <span class="row-value md-typescale-body-medium" id="resVal">60</span>
+          <md-slider id="resSlider" min="10" max="150" step="1" value="60" aria-labelledby="resLabel"></md-slider>
         </div>
-        <p class="hint">Higher = smoother surface, more polygons, slower render.</p>
+        <p class="hint md-typescale-body-small">Higher = smoother surface, more polygons, slower render.</p>
       </div>
     </div>
 
+    <!-- Rotation -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Rotation matrix — [m°, n°]</div>
-        <div class="rot-row">
-          <label for="azSlider">m · azimuth</label>
-          <input id="azSlider" type="range" min="-180" max="180" step="1" value="45" />
-          <input class="val-input" id="azNumInput" type="number" step="1" value="45" />
+        <h2 class="panel-title md-typescale-title-medium">Rotation matrix — [m°, n°]</h2>
+        <div class="slider-row with-field">
+          <span class="row-label md-typescale-body-medium" id="azLabel">m · azimuth</span>
+          <md-slider id="azSlider" min="-180" max="180" step="1" value="45" aria-labelledby="azLabel"></md-slider>
+          <md-outlined-text-field class="mono" id="azNumInput" type="number" step="1" value="45" aria-label="Azimuth in degrees"></md-outlined-text-field>
         </div>
-        <div class="rot-row">
-          <label for="elSlider">n · elevation</label>
-          <input id="elSlider" type="range" min="-90" max="90" step="1" value="45" />
-          <input class="val-input" id="elNumInput" type="number" step="1" value="45" />
+        <div class="slider-row with-field">
+          <span class="row-label md-typescale-body-medium" id="elLabel">n · elevation</span>
+          <md-slider id="elSlider" min="-90" max="90" step="1" value="45" aria-labelledby="elLabel"></md-slider>
+          <md-outlined-text-field class="mono" id="elNumInput" type="number" step="1" value="45" aria-label="Elevation in degrees"></md-outlined-text-field>
         </div>
-        <p class="hint">Type any value, including past ±360° — it wraps with modulo (e.g. 720° = 0°).</p>
+        <p class="hint md-typescale-body-small">Type any value, including past ±360° — it wraps with modulo (e.g. 720° = 0°).</p>
       </div>
     </div>
 
+    <!-- Axes -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Axes</div>
-        <div class="axis-grid">
-          <div class="axis-field">
-            <label for="xAxisSel">X</label>
-            <select id="xAxisSel"></select>
-          </div>
-          <div class="axis-field">
-            <label for="yAxisSel">Y</label>
-            <select id="yAxisSel"></select>
-          </div>
-          <div class="axis-field">
-            <label for="zAxisSel">Z</label>
-            <select id="zAxisSel"></select>
-          </div>
-          <div class="axis-field">
-            <label for="colorAxisSel">Color</label>
-            <select id="colorAxisSel"></select>
-          </div>
+        <h2 class="panel-title md-typescale-title-medium">Axes</h2>
+        <div class="grid-2">
+          <md-outlined-select class="mono" id="xAxisSel" label="X"></md-outlined-select>
+          <md-outlined-select class="mono" id="yAxisSel" label="Y"></md-outlined-select>
+          <md-outlined-select class="mono" id="zAxisSel" label="Z"></md-outlined-select>
+          <md-outlined-select class="mono" id="colorAxisSel" label="Color"></md-outlined-select>
         </div>
-        <div id="axisError"></div>
+        <div id="axisError" role="alert"></div>
       </div>
     </div>
 
+    <!-- Animation -->
     <div class="section">
       <div class="panel">
-        <div class="field-label">Animate — rotate between two views</div>
-        <div class="rot-row" style="margin-top:0;">
-          <label>start [m°, n°]</label>
+        <h2 class="panel-title md-typescale-title-medium">Animate — rotate between two views</h2>
+
+        <p class="subhead md-typescale-label-large">Start [m°, n°]</p>
+        <div class="grid-2">
+          <md-outlined-text-field class="mono" id="m0Input" type="number" step="1" label="m₀" value="-60"></md-outlined-text-field>
+          <md-outlined-text-field class="mono" id="n0Input" type="number" step="1" label="n₀" value="20"></md-outlined-text-field>
         </div>
-        <div class="anim-view-grid">
-          <div class="range-field">
-            <label for="m0Input">m₀</label>
-            <input id="m0Input" type="number" step="1" value="-60" />
-          </div>
-          <div class="range-field">
-            <label for="n0Input">n₀</label>
-            <input id="n0Input" type="number" step="1" value="20" />
-          </div>
+
+        <p class="subhead md-typescale-label-large">End [m°, n°]</p>
+        <div class="grid-2">
+          <md-outlined-text-field class="mono" id="m1Input" type="number" step="1" label="m₁" value="300"></md-outlined-text-field>
+          <md-outlined-text-field class="mono" id="n1Input" type="number" step="1" label="n₁" value="20"></md-outlined-text-field>
         </div>
-        <div class="rot-row">
-          <label>end [m°, n°]</label>
+
+        <div class="slider-row">
+          <span class="row-label md-typescale-body-medium" id="framesLabel">Frames</span>
+          <span class="row-value md-typescale-body-medium" id="framesVal">24</span>
+          <md-slider id="framesSlider" min="4" max="60" step="1" value="24" aria-labelledby="framesLabel"></md-slider>
         </div>
-        <div class="anim-view-grid">
-          <div class="range-field">
-            <label for="m1Input">m₁</label>
-            <input id="m1Input" type="number" step="1" value="300" />
-          </div>
-          <div class="range-field">
-            <label for="n1Input">n₁</label>
-            <input id="n1Input" type="number" step="1" value="20" />
-          </div>
+        <div class="slider-row">
+          <span class="row-label md-typescale-body-medium" id="frameMsLabel">Milliseconds per frame</span>
+          <span class="row-value md-typescale-body-medium" id="frameMsVal">80</span>
+          <md-slider id="frameMsSlider" min="30" max="1000" step="10" value="80" aria-labelledby="frameMsLabel"></md-slider>
         </div>
-        <div class="rot-row">
-          <label for="framesSlider">frames</label>
-          <input id="framesSlider" type="range" min="4" max="60" step="1" value="24" />
-          <span class="val" id="framesVal">24</span>
-        </div>
-        <div class="rot-row">
-          <label for="frameMsSlider">ms / frame</label>
-          <input id="frameMsSlider" type="range" min="30" max="1000" step="10" value="80" />
-          <span class="val" id="frameMsVal">80</span>
-        </div>
-        <div id="animError"></div>
-        <p class="hint">m/n wrap with modulo too — e.g. 300° = -60°, 720° = 0°.</p>
+
+        <div id="animError" role="alert"></div>
+        <p class="hint md-typescale-body-small">m/n wrap with modulo too — e.g. 300° = -60°, 720° = 0°.</p>
       </div>
     </div>
 
+    <!-- Actions -->
     <div class="section">
-      <button class="action-btn secondary-btn" id="animateBtn" type="button">Generate GIF</button>
-    </div>
-
-    <div class="section">
-      <button class="action-btn" id="generateBtn">Generate image</button>
+      <div class="button-stack">
+        <md-filled-tonal-button id="animateBtn" type="button">
+          <md-icon slot="icon">animation</md-icon>
+          Generate GIF
+        </md-filled-tonal-button>
+        <md-filled-button id="generateBtn" type="button">
+          <md-icon slot="icon">image</md-icon>
+          Generate image
+        </md-filled-button>
+      </div>
     </div>
   </div>
 
@@ -258,11 +396,14 @@
     <div class="section">
       <div class="output-box empty-state" id="outputBox">
         <div class="empty" id="emptyState">
-          <div class="icon">◔</div>
-          <div>Your rendered surface will appear here</div>
+          <md-icon>view_in_ar</md-icon>
+          <div class="md-typescale-body-large">Your rendered surface will appear here</div>
         </div>
         <img id="outputImg" alt="Rendered complex surface" />
-        <div class="loading" id="loadingState">Rendering on the Python engine…</div>
+        <div class="loading" id="loadingState" role="status" aria-live="polite">
+          <md-circular-progress indeterminate aria-label="Rendering"></md-circular-progress>
+          <div class="md-typescale-body-medium" id="loadingText">Rendering on the Python engine…</div>
+        </div>
       </div>
     </div>
   </div>
@@ -271,6 +412,28 @@
 
 <script>
 let hasImage = false;
+
+// ---------- light / dark toggle ----------
+(function () {
+  const root = document.documentElement;
+  const btn = document.getElementById("themeToggle");
+  const icon = document.getElementById("themeIcon");
+  function sync() {
+    const dark = root.getAttribute("data-theme") === "dark";
+    // Icon shows what a click will switch to.
+    icon.textContent = dark ? "light_mode" : "dark_mode";
+    const label = dark ? "Switch to light mode" : "Switch to dark mode";
+    btn.setAttribute("aria-label", label);
+    btn.setAttribute("title", label);
+  }
+  btn.addEventListener("click", () => {
+    const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("plane-theme", next); } catch (e) {}
+    sync();
+  });
+  sync();
+})();
 
 const AXIS_OPTIONS = [
   { key: "x", label: "x — Re(input)" },
@@ -281,88 +444,144 @@ const AXIS_OPTIONS = [
   { key: "p", label: "arg(w) — phase" },
 ];
 
-const azSlider = document.getElementById("azSlider");
-const elSlider = document.getElementById("elSlider");
-const azNumInput = document.getElementById("azNumInput");
-const elNumInput = document.getElementById("elNumInput");
-const eqInput = document.getElementById("eqInput");
-const eqError = document.getElementById("eqError");
-const generateBtn = document.getElementById("generateBtn");
-const outputBox = document.getElementById("outputBox");
-const emptyState = document.getElementById("emptyState");
-const outputImg = document.getElementById("outputImg");
+const $ = (id) => document.getElementById(id);
 
-const xMinInput = document.getElementById("xMinInput");
-const xMaxInput = document.getElementById("xMaxInput");
-const yMinInput = document.getElementById("yMinInput");
-const yMaxInput = document.getElementById("yMaxInput");
-const rangeError = document.getElementById("rangeError");
-const resSlider = document.getElementById("resSlider");
-const resVal = document.getElementById("resVal");
+const azSlider = $("azSlider");
+const elSlider = $("elSlider");
+const azNumInput = $("azNumInput");
+const elNumInput = $("elNumInput");
+const eqInput = $("eqInput");
+const eqError = $("eqError");
+const generateBtn = $("generateBtn");
+const animateBtn = $("animateBtn");
+const outputBox = $("outputBox");
+const emptyState = $("emptyState");
+const outputImg = $("outputImg");
+const loadingText = $("loadingText");
 
-const xAxisSel = document.getElementById("xAxisSel");
-const yAxisSel = document.getElementById("yAxisSel");
-const zAxisSel = document.getElementById("zAxisSel");
-const colorAxisSel = document.getElementById("colorAxisSel");
-const axisError = document.getElementById("axisError");
+const xMinInput = $("xMinInput");
+const xMaxInput = $("xMaxInput");
+const yMinInput = $("yMinInput");
+const yMaxInput = $("yMaxInput");
+const rangeError = $("rangeError");
+const resSlider = $("resSlider");
+const resVal = $("resVal");
 
-[xAxisSel, yAxisSel, zAxisSel, colorAxisSel].forEach((sel) => {
+const xAxisSel = $("xAxisSel");
+const yAxisSel = $("yAxisSel");
+const zAxisSel = $("zAxisSel");
+const colorAxisSel = $("colorAxisSel");
+const axisError = $("axisError");
+const axisSels = [xAxisSel, yAxisSel, zAxisSel, colorAxisSel];
+
+const m0Input = $("m0Input");
+const n0Input = $("n0Input");
+const m1Input = $("m1Input");
+const n1Input = $("n1Input");
+const framesSlider = $("framesSlider");
+const framesVal = $("framesVal");
+const frameMsSlider = $("frameMsSlider");
+const frameMsVal = $("frameMsVal");
+const animError = $("animError");
+
+// ---------- small helpers ----------
+
+// Error banner (error-container role). Uses textContent so server messages
+// can never be interpreted as HTML.
+function showError(container, message) {
+  container.replaceChildren();
+  if (!message) return;
+  const box = document.createElement("div");
+  box.className = "error-banner md-typescale-body-medium";
+  box.textContent = message;
+  container.appendChild(box);
+}
+
+// Material fields have their own error state; mark the offending ones.
+function markFields(fields, message) {
+  fields.forEach((f) => { f.error = !!message; f.errorText = message || ""; });
+}
+
+// ---------- axis selects ----------
+axisSels.forEach((sel) => {
   AXIS_OPTIONS.forEach((opt) => {
-    const el = document.createElement("option");
-    el.value = opt.key;
-    el.textContent = opt.label;
-    sel.appendChild(el);
+    const o = document.createElement("md-select-option");
+    o.value = opt.key;
+    const h = document.createElement("div");
+    h.slot = "headline";
+    h.textContent = opt.label;
+    o.appendChild(h);
+    sel.appendChild(o);
   });
 });
-xAxisSel.value = "x";
-yAxisSel.value = "y";
-zAxisSel.value = "a";
-colorAxisSel.value = "b";
+// Set initial selection via the `selected` attribute so it works before the
+// custom elements finish upgrading.
+function preselect(sel, key) {
+  [...sel.querySelectorAll("md-select-option")].forEach((o) => {
+    o.toggleAttribute("selected", o.getAttribute("value") === key || o.value === key);
+  });
+}
+preselect(xAxisSel, "x");
+preselect(yAxisSel, "y");
+preselect(zAxisSel, "a");
+preselect(colorAxisSel, "b");
 
 function validateAxes() {
   const x = xAxisSel.value, y = yAxisSel.value, z = zAxisSel.value;
   if (new Set([x, y, z]).size < 3) {
-    axisError.innerHTML = `<div class="error-box">X, Y, and Z axes must all be different.</div>`;
+    showError(axisError, "X, Y, and Z axes must all be different.");
+    markFields([xAxisSel, yAxisSel, zAxisSel], " ");
     return false;
   }
-  axisError.innerHTML = "";
+  showError(axisError, "");
+  markFields([xAxisSel, yAxisSel, zAxisSel], "");
   return true;
 }
 
-[xAxisSel, yAxisSel, zAxisSel, colorAxisSel].forEach((sel) => {
+axisSels.forEach((sel) => {
   sel.addEventListener("change", () => {
     if (!validateAxes()) return;
     if (hasImage) requestRender();
   });
 });
 
+// ---------- domain range ----------
+const rangeFields = [xMinInput, xMaxInput, yMinInput, yMaxInput];
+
 function validateRange() {
   const xMin = parseFloat(xMinInput.value);
   const xMax = parseFloat(xMaxInput.value);
   const yMin = parseFloat(yMinInput.value);
   const yMax = parseFloat(yMaxInput.value);
+  markFields(rangeFields, "");
   if ([xMin, xMax, yMin, yMax].some((v) => Number.isNaN(v))) {
-    rangeError.innerHTML = `<div class="error-box">Range values must be numbers.</div>`;
+    showError(rangeError, "Range values must be numbers.");
+    markFields(rangeFields.filter((f) => Number.isNaN(parseFloat(f.value))), " ");
     return null;
   }
   if (xMax <= xMin) {
-    rangeError.innerHTML = `<div class="error-box">x₂ must be greater than x₁.</div>`;
+    showError(rangeError, "x₂ must be greater than x₁.");
+    markFields([xMinInput, xMaxInput], " ");
     return null;
   }
   if (yMax <= yMin) {
-    rangeError.innerHTML = `<div class="error-box">y₂ must be greater than y₁.</div>`;
+    showError(rangeError, "y₂ must be greater than y₁.");
+    markFields([yMinInput, yMaxInput], " ");
     return null;
   }
-  rangeError.innerHTML = "";
+  showError(rangeError, "");
   return { xMin, xMax, yMin, yMax };
 }
 
-resSlider.addEventListener("input", () => { resVal.textContent = resSlider.value; });
-resSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
-[xMinInput, xMaxInput, yMinInput, yMaxInput].forEach((el) => {
-  el.addEventListener("change", () => { if (hasImage && validateRange()) requestRender(); });
+rangeFields.forEach((el) => {
+  el.addEventListener("change", () => { if (validateRange() && hasImage) requestRender(); });
 });
 
+// ---------- accuracy ----------
+resSlider.addEventListener("input", () => { resVal.textContent = resSlider.value; });
+resSlider.addEventListener("change", () => { if (hasImage) requestRender(); });
+
+// ---------- output display ----------
 function showEmpty() {
   emptyState.style.display = "flex";
   outputImg.style.display = "none";
@@ -386,13 +605,29 @@ function displayImage(dataUri) {
   outputImg.src = dataUri;
 }
 
+function setBusy(busy, message) {
+  outputBox.classList.toggle("loading", busy);
+  generateBtn.disabled = busy;
+  animateBtn.disabled = busy;
+  if (message) loadingText.textContent = message;
+}
+
+// Wrap v into [lo, hi) using true modulo arithmetic, so e.g. 720 deg
+// normalizes the same as 0 deg, -450 the same as -90, etc. Mirrors the
+// backend's normalize_angle() so what you see typed matches what renders.
+function normalizeAngle(v, lo, hi) {
+  const period = hi - lo;
+  return (((v - lo) % period) + period) % period + lo;
+}
+
+// ---------- render ----------
 async function requestRender() {
-  eqError.innerHTML = "";
+  showError(eqError, "");
+  markFields([eqInput], "");
   const range = validateRange();
   if (!range) return;
   if (!validateAxes()) return;
-  outputBox.classList.add("loading");
-  generateBtn.disabled = true;
+  setBusy(true, "Rendering on the Python engine…");
   try {
     const res = await fetch("/api/render", {
       method: "POST",
@@ -419,21 +654,14 @@ async function requestRender() {
   } catch (err) {
     hasImage = false;
     showEmpty();
-    eqError.innerHTML = `<div class="error-box">${err.message}</div>`;
+    showError(eqError, err.message);
+    markFields([eqInput], " ");
   } finally {
-    outputBox.classList.remove("loading");
-    generateBtn.disabled = false;
+    setBusy(false);
   }
 }
 
-// Wrap v into [lo, hi) using true modulo arithmetic, so e.g. 720 deg
-// normalizes the same as 0 deg, -450 the same as -90, etc. Mirrors the
-// backend's normalize_angle() so what you see typed matches what renders.
-function normalizeAngle(v, lo, hi) {
-  const period = hi - lo;
-  return (((v - lo) % period) + period) % period + lo;
-}
-
+// ---------- rotation controls ----------
 azSlider.addEventListener("input", () => { azNumInput.value = azSlider.value; });
 elSlider.addEventListener("input", () => { elNumInput.value = elSlider.value; });
 // re-render once the person releases the slider, only if an image already exists
@@ -457,30 +685,19 @@ elNumInput.addEventListener("change", () => {
   if (hasImage) requestRender();
 });
 
-document.getElementById("generateBtn").addEventListener("click", requestRender);
+generateBtn.addEventListener("click", requestRender);
 
-const m0Input = document.getElementById("m0Input");
-const n0Input = document.getElementById("n0Input");
-const m1Input = document.getElementById("m1Input");
-const n1Input = document.getElementById("n1Input");
-const framesSlider = document.getElementById("framesSlider");
-const framesVal = document.getElementById("framesVal");
-const frameMsSlider = document.getElementById("frameMsSlider");
-const frameMsVal = document.getElementById("frameMsVal");
-const animError = document.getElementById("animError");
-const animateBtn = document.getElementById("animateBtn");
-const loadingState = document.getElementById("loadingState");
-
+// ---------- animation ----------
 framesSlider.addEventListener("input", () => { framesVal.textContent = framesSlider.value; });
 frameMsSlider.addEventListener("input", () => { frameMsVal.textContent = frameMsSlider.value; });
 
 // No display normalization here on purpose -- these fields have no slider to
 // sync, so whatever you type (e.g. "720") stays on screen exactly as typed.
 // The modulo wrap is applied only when building the request, in requestAnimate().
-
 async function requestAnimate() {
-  animError.innerHTML = "";
-  eqError.innerHTML = "";
+  showError(animError, "");
+  showError(eqError, "");
+  markFields([eqInput], "");
   const range = validateRange();
   if (!range) return;
   if (!validateAxes()) return;
@@ -490,14 +707,11 @@ async function requestAnimate() {
   const m1 = normalizeAngle(parseFloat(m1Input.value), -180, 180);
   const n1 = normalizeAngle(parseFloat(n1Input.value), -90, 90);
   if ([m0, n0, m1, n1].some((v) => Number.isNaN(v))) {
-    animError.innerHTML = `<div class="error-box">Start/end angles must be numbers.</div>`;
+    showError(animError, "Start/end angles must be numbers.");
     return;
   }
 
-  loadingState.textContent = "Rendering frames and assembling GIF…";
-  outputBox.classList.add("loading");
-  animateBtn.disabled = true;
-  generateBtn.disabled = true;
+  setBusy(true, "Rendering frames and assembling GIF…");
   try {
     const res = await fetch("/api/animate", {
       method: "POST",
@@ -525,12 +739,9 @@ async function requestAnimate() {
   } catch (err) {
     hasImage = false;
     showEmpty();
-    animError.innerHTML = `<div class="error-box">${err.message}</div>`;
+    showError(animError, err.message);
   } finally {
-    outputBox.classList.remove("loading");
-    loadingState.textContent = "Rendering on the Python engine…";
-    animateBtn.disabled = false;
-    generateBtn.disabled = false;
+    setBusy(false, "Rendering on the Python engine…");
   }
 }
 
